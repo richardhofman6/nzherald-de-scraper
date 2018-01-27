@@ -6,6 +6,11 @@ import img2pdf
 
 import requests
 
+import smtplib
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 class NZHeraldEdition:
     def __init__(self, date, heraldsess):
         self.date = date.strftime("%Y-%m-%d")
@@ -75,20 +80,29 @@ def init():
             if not section.upper() in sections_to_exclude:
                 print("Debug: Rendering PDF for section %s" % section)
                 pdf_sections[section] = nzh_today.render_pdf(pages)
-        for pdf_section, pdf_data in pdf_sections.items():
-            print("Debug: Writing %s to PDF..." % pdf_section)
-            f = open("NZ Herald - %s.pdf" % (pdf_section), 'wb')
-            f.write(pdf_data)
-            f.close()
+        
+        print("Debug: Creating email message")
+        mailmsg = MIMEMultipart()
+        mailmsg['Subject'] = 'NZ Herald Digital Edition PDF'
+        mailmsg['From'] = config['from_email']
+        mailmsg['To'] = config['to_email']
+        body = "Hi,\n\nAttached are copies of each section of this morning's NZ Herald.\n\nThis email was sent automatically, please do not reply."
+        part1 = MIMEText(body, 'plain')
+        mailmsg.attach(part1)
+
+        for section_name, data in pdf_sections.items():
+            print("Debug: Attaching %s..." % section_name)
+            pdf = MIMEApplication(data, _subtype = "pdf")
+            pdf.add_header('Content-Disposition', 'attachment', filename=section_name+".pdf")
+            mailmsg.attach(pdf)
+        
+        server = smtplib.SMTP(config['smtp_server'], config['smtp_port'])
+        server.ehlo()
+        server.starttls()
+        server.send_message(mailmsg)
     else:
         print("Error: Unable to log in!")
         nzh_today = None
-    
-
-    # pdf_data = nzh_today.render_pdf()
-    # email = {"subject": "NZ Herald DE - Saturday, DD/MM YYYY",
-    #          "body": "Hi Ngarie,\nAttached is today's copy of the NZ Herald, in digital form.",
-    #          "attachments": ...}
 
 if __name__ == "__main__":
     init()
