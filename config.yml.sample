@@ -1,0 +1,9 @@
+login_email: user@example.com
+login_password: abc123
+recip_email: user2@example.com
+smtp_server: 127.0.0.1
+smtp_username: null
+smtp_password: null
+
+sections_to_exclude:
+  - Homes # this is a large section (~35MB PDF) so I exclude this in my emails.

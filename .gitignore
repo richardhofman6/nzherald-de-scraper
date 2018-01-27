@@ -1,0 +1,4 @@
+.python-version
+*.yml
+__pycache__/*
+*.pyc
